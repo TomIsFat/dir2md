@@ -1,0 +1,10 @@
+{
+  "repo2md.displayName": "Repo to Markdown",
+  "repo2md.description": "Convert a folder into a Markdown file with directory tree and file contents",
+  "repo2md.start.title": "Repo to Markdown: Select Folder and Generate",
+  "repo2md.config.title": "Repo to Markdown",
+  "repo2md.enableSensitiveRedaction.description": "Auto-replace sensitive info (passwords, keys, tokens) with [REDACTED]",
+  "repo2md.tokenWarningThreshold.description": "Warn before generating if estimated token count exceeds this value. Set 0 to disable.",
+  "repo2md.respectGitignore.description": "Respect .gitignore rules in the project root when scanning",
+  "repo2md.rememberSelection.description": "Remember file selection per project"
+}

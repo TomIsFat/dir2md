@@ -1,0 +1,74 @@
+{
+  "name": "repo2md",
+  "publisher": "vestjin",
+  "displayName": "%repo2md.displayName%",
+  "description": "%repo2md.description%",
+  "version": "1.0.3",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "keywords": [
+    "markdown", "export", "documentation", "directory tree", "file content"
+  ],
+  "activationEvents": ["onCommand:repo2md.start"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "repo2md.start",
+        "title": "%repo2md.start.title%"
+      }
+    ],
+    "configuration": {
+      "title": "%repo2md.config.title%",
+      "properties": {
+        "repo2md.enableSensitiveRedaction": {
+          "type": "boolean",
+          "default": true,
+          "description": "%repo2md.enableSensitiveRedaction.description%"
+        },
+        "repo2md.tokenWarningThreshold": {
+          "type": "number",
+          "default": 128000,
+          "description": "%repo2md.tokenWarningThreshold.description%"
+        },
+        "repo2md.respectGitignore": {
+          "type": "boolean",
+          "default": true,
+          "description": "%repo2md.respectGitignore.description%"
+        },
+        "repo2md.rememberSelection": {
+          "type": "boolean",
+          "default": true,
+          "description": "%repo2md.rememberSelection.description%"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "iconv-lite": "^0.6.3",
+    "ignore": "^5.3.0"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vestjin/repo2md.git"
+  },
+  "bugs": {
+    "url": "https://github.com/vestjin/repo2md/issues"
+  },
+  "homepage": "https://github.com/vestjin/repo2md",
+  "license": "GPL-3.0-only"
+}

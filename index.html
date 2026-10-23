@@ -1,30 +1,304 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DIR2MD</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jstree@3.3.12/dist/themes/default/style.min.css"/>
-  <link rel="stylesheet" href="style.css"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>repo2md — 项目转 Markdown</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jstree@3.3.12/dist/themes/default/style.min.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <h1>📘 文件夹转Markdown</h1>
-  <div class="file-picker-wrapper">
-    <label for="directory-picker" class="file-picker-btn">选择文件夹或拖放到此处</label>
-    <input type="file" id="directory-picker" webkitdirectory directory multiple />
-  </div>
-  <div>
-    <label><strong>后缀筛选</strong></label>
-    <div id="extension-filters"></div>
-  </div>
-  <div id="tree-container"></div>
-  <p>✅ 当前选中文件总字符数：<span id="char-count">0</span></p>
-  <button id="generate-btn">生成 Markdown</button>
-  <button id="copy-btn">📋 复制到剪贴板</button>
-  <textarea id="markdown-output" rows="20" placeholder="Markdown 会显示在这里..."></textarea>
+  <div class="shell">
 
-  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jstree@3.3.12/dist/jstree.min.js"></script>
+    <!-- ==================== 标题栏 ==================== -->
+    <div class="titlebar">
+      <div class="traffic">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+      </div>
+      <div class="titlebar-title"><span class="prompt">~/</span>repo2md</div>
+      <div class="titlebar-meta">项目转 Markdown</div>
+    </div>
+
+    <div class="workspace">
+
+      <!-- ==================== 左侧栏 ==================== -->
+      <aside class="sidebar">
+
+        <!-- 来源 -->
+        <div class="section">
+          <div class="section-label">来源</div>
+          <div class="drop-zone" id="drop-zone">
+            <div class="drop-ascii">[ + ]</div>
+            <div class="drop-title">拖入文件夹或压缩包</div>
+            <div class="drop-sub">ZIP · TAR · GZ · TGZ</div>
+
+            <div class="pick-wrap">
+              <button type="button" id="pick-btn" class="btn btn-accent"
+                      aria-haspopup="true" aria-expanded="false">
+                选择来源
+                <span class="caret" aria-hidden="true"></span>
+              </button>
+
+              <div class="pick-menu" id="pick-menu" hidden role="menu">
+                <button type="button" class="menu-item" id="menu-folder" role="menuitem">
+                  <span class="menu-icon">📁</span>
+                  <span class="menu-body">
+                    <strong>选择文件夹</strong>
+                    <small>直接读取本地目录</small>
+                  </span>
+                </button>
+                <button type="button" class="menu-item" id="menu-archive" role="menuitem">
+                  <span class="menu-icon">📦</span>
+                  <span class="menu-body">
+                    <strong>上传压缩包</strong>
+                    <small>ZIP / TAR / GZ / TGZ</small>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <input type="file" id="directory-picker" webkitdirectory directory multiple hidden />
+          <input type="file" id="archive-upload" accept=".zip,.tar,.gz,.tgz,.tar.gz,.gzip" hidden />
+
+          <div class="progress-stack">
+            <div id="archive-progress" class="progress" hidden>
+              <span class="spinner"></span>
+              <span>解压中 · 已处理 <b id="extract-count">0</b> 个文件</span>
+            </div>
+            <div id="scan-progress" class="progress" hidden>
+              <span class="spinner"></span>
+              <span>扫描中 · 已发现 <b id="scan-count">0</b> 个文件</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 后缀筛选 -->
+        <div class="section">
+          <div class="section-label">后缀筛选</div>
+          <div id="extension-filters" class="chips"></div>
+        </div>
+
+        <!-- 文件树 -->
+        <div class="section section-grow">
+          <div class="section-label">
+            <span>文件列表</span>
+            <span class="size-tag" id="size-display">0 B</span>
+          </div>
+          <div id="tree-container"></div>
+        </div>
+
+      </aside>
+
+      <!-- ==================== 右侧编辑区 ==================== -->
+      <main class="editor">
+
+        <div class="editor-head">
+          <div class="tab active">
+            <span class="tab-dot"></span>
+            output.md
+          </div>
+          <div class="editor-actions">
+            <button id="generate-btn" class="btn btn-accent">▶ 生成</button>
+            <button id="copy-btn" class="btn">复制</button>
+            <button id="export-btn" class="btn">导出</button>
+            <button id="share-btn" class="btn" hidden>分享</button>
+          </div>
+        </div>
+
+        <div id="generate-progress" class="progress" hidden>
+          <span class="spinner"></span>
+          <span>生成中 · <b id="generate-status"></b></span>
+        </div>
+
+        <!-- ★ 新增：包裹层（TOC 相对定位的基准） -->
+        <div class="editor-body">
+          <textarea id="markdown-output" placeholder="// 生成的 Markdown 会显示在这里…" spellcheck="false"></textarea>
+
+          <!-- ★ 新增：悬浮目录 -->
+          <div class="toc" id="toc" hidden>
+            <button type="button" id="toc-toggle" class="toc-toggle"
+                    aria-expanded="false" aria-controls="toc-panel">☰ 目录</button>
+            <div class="toc-panel" id="toc-panel" hidden>
+              <div class="toc-head">
+                <span>大纲</span>
+                <button type="button" id="toc-close" class="toc-close" title="收起">×</button>
+              </div>
+              <div class="toc-list" id="toc-list"></div>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+    </div>
+
+    <!-- ==================== 状态栏 ==================== -->
+    <footer class="statusbar">
+      <span class="status-item"><span class="status-dot"></span>READY</span>
+      <span class="status-spacer"></span>
+      <span class="status-item">纯前端处理 · 文件不离开浏览器</span>
+    </footer>
+
+  </div>
+
+  <script src="./vendor/jquery.min.js"></script>
+  <script src="./vendor/jszip.min.js"></script>
+  <script src="./vendor/pako.min.js"></script>
+  <script src="./vendor/jstree.min.js"></script>
+
   <script src="script.js"></script>
+
+  <!-- ==================== ★ 新增：悬浮目录逻辑 ==================== -->
+  <script>
+    (function () {
+      'use strict';
+
+      // ---------- 1. 面板开关 ----------
+      function setOpen(open) {
+        const toggle = document.getElementById('toc-toggle');
+        const panel  = document.getElementById('toc-panel');
+        if (!toggle || !panel) return;
+        panel.hidden = !open;
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.textContent = open ? '▾ 目录' : '☰ 目录';
+      }
+
+      function initTocUI() {
+        const toc      = document.getElementById('toc');
+        const toggle   = document.getElementById('toc-toggle');
+        const panel    = document.getElementById('toc-panel');
+        const closeBtn = document.getElementById('toc-close');
+        if (!toc || !toggle || !panel) return;
+
+        toggle.addEventListener('click', (e) => {
+          e.stopPropagation();
+          setOpen(panel.hidden);
+        });
+
+        if (closeBtn) {
+          closeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setOpen(false);
+          });
+        }
+
+        // 点击面板外部收起
+        document.addEventListener('click', (e) => {
+          if (panel.hidden) return;
+          if (toc.contains(e.target)) return;
+          setOpen(false);
+        });
+
+        // Esc 收起
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && !panel.hidden) setOpen(false);
+        });
+      }
+
+      // ---------- 2. 用镜像元素估算某个字符偏移在 textarea 里的像素高度 ----------
+      function measureOffsetTop(ta, offset) {
+        const cs = getComputedStyle(ta);
+
+        const mirror = document.createElement('div');
+        mirror.setAttribute('aria-hidden', 'true');
+        Object.assign(mirror.style, {
+          position: 'absolute',
+          top: '0',
+          left: '-99999px',
+          visibility: 'hidden',
+          pointerEvents: 'none',
+          width: ta.clientWidth + 'px',
+          margin: '0',
+          border: cs.border,
+          padding: cs.padding,
+          fontFamily: cs.fontFamily,
+          fontSize: cs.fontSize,
+          fontWeight: cs.fontWeight,
+          fontStyle: cs.fontStyle,
+          lineHeight: cs.lineHeight,
+          letterSpacing: cs.letterSpacing,
+          whiteSpace: 'pre-wrap',
+          wordWrap: 'break-word',
+          overflowWrap: 'break-word',
+          boxSizing: 'border-box'
+        });
+        mirror.textContent = ta.value.substring(0, offset);
+        document.body.appendChild(mirror);
+        const height = mirror.scrollHeight;
+        document.body.removeChild(mirror);
+        return height;
+      }
+
+      // ---------- 3. 跳转到指定字符偏移 ----------
+      function jumpToOffset(offset) {
+        const ta = document.getElementById('markdown-output');
+        if (!ta) return;
+
+        const target = Math.max(0, Math.min(offset, ta.value.length));
+
+        // 把光标定位过去（键盘可以继续从那里导航）
+        try { ta.focus({ preventScroll: true }); } catch (_) { ta.focus(); }
+        try { ta.setSelectionRange(target, target); } catch (_) {}
+
+        // 手动滚动到目标位置
+        let top = 0;
+        try { top = measureOffsetTop(ta, target); } catch (_) { top = 0; }
+
+        if (top > 0) {
+          // 顶部留一点余量，避免紧贴边
+          ta.scrollTop = Math.max(0, top - 40);
+        } else {
+          // 极端兜底：按行估算
+          const before = ta.value.slice(0, target);
+          const lineCount = before.split('\n').length;
+          const lh = parseFloat(getComputedStyle(ta).lineHeight) || 20;
+          ta.scrollTop = Math.max(0, lineCount * lh - 40);
+        }
+      }
+
+      // ---------- 4. 渲染目录（供 script.js 调用） ----------
+      window.renderMdToc = function () {
+        const toc  = document.getElementById('toc');
+        const list = document.getElementById('toc-list');
+        if (!toc || !list) return;
+
+        const outline = Array.isArray(window.mdOutline) ? window.mdOutline : [];
+
+        if (outline.length === 0) {
+          toc.hidden = true;
+          setOpen(false);
+          list.innerHTML = '';
+          return;
+        }
+
+        toc.hidden = false;
+        list.innerHTML = '';
+
+        outline.forEach((item) => {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'toc-item toc-level-' + (item.level || 1);
+          btn.textContent = item.title;
+          btn.title = item.title;
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            jumpToOffset(item.offset || 0);
+          });
+          list.appendChild(btn);
+        });
+      };
+
+      // ---------- 5. 启动 ----------
+      document.addEventListener('DOMContentLoaded', () => {
+        initTocUI();
+        // 初始状态：没有大纲 → 隐藏
+        window.renderMdToc();
+      });
+    })();
+  </script>
 </body>
 </html>

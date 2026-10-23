@@ -1,0 +1,10 @@
+{
+  "repo2md.displayName": "项目转 Markdown",
+  "repo2md.description": "将项目文件夹转换为包含目录树和文件内容的 Markdown 文件",
+  "repo2md.start.title": "项目转 Markdown: 选择文件夹并生成",
+  "repo2md.config.title": "项目转 Markdown",
+  "repo2md.enableSensitiveRedaction.description": "自动替换生成内容中的敏感信息（密码、密钥、token 等）为 [REDACTED]",
+  "repo2md.tokenWarningThreshold.description": "生成前 token 预估超过此值时弹窗警告。设为 0 可关闭警告。",
+  "repo2md.respectGitignore.description": "扫描时遵循项目根目录的 .gitignore 规则",
+  "repo2md.rememberSelection.description": "记住每个项目上次勾选的文件，下次打开自动恢复"
+}
